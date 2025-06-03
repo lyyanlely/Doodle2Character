@@ -469,8 +469,15 @@
                         role: "user",
                         parts: [
                             { text: imagenPrompt }
+                            // { inlineData: { mimeType: "image/png", data: base64ImageData } }
                         ]
                     }],
+                    generationConfig: {
+                        responseModalities: [
+                            "TEXT",
+                            "IMAGE"
+                        ]
+                    },
                 };
 
                 const imagenResult = await fetchWithRetry(imagenApiUrl, imagenPayload);
@@ -478,8 +485,8 @@
 
                 if (imagenResult.candidates && imagenResult.candidates[0].content && imagenResult.candidates[0].content.parts) {
                     for (const part of imagenResult.candidates[0].content.parts) {
-                        if (part.image) {
-                            generatedImageUrl = `data:image/png;base64,${part.image.data.bytesBase64Encoded}`;
+                        if (part.inlineData) {
+                            generatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
                             generatedImage.src = generatedImageUrl;
                             generatedImage.classList.remove('hidden');
                             resultPlaceholder.classList.add('hidden');

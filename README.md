@@ -21,26 +21,48 @@ This project now has **two versions**:
 
 ## Quick Start
 
+### Prerequisites
+- **Python 3.8+** (for backend)
+- **Node.js 18+** (for TypeScript frontend)
+- **Gemini API key**
+
+### Python Backend Setup
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+# On Windows:
+# venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start backend server
+uvicorn main:app --reload --port 8003
+```
+
 ### Option 1: TypeScript Frontend (Recommended)
 
 ```bash
-# Install dependencies
+# Install Node.js dependencies
 npm install
 
 # Start frontend
 npm run dev
 # → Visit http://localhost:3000
 
-# Start backend (in separate terminal)
-uvicorn main:app --reload --port 8003
+# Backend should already be running from above
 # → Visit http://localhost:8003/agent-preview/typescript
 ```
 
 ### Option 2: Legacy HTML Version
 
 ```bash
-# Start backend only
-uvicorn main:app --reload --port 8003
+# Backend should already be running from Python setup above
 # → Visit http://localhost:8003/agent-preview/static-html
 ```
 
@@ -58,7 +80,10 @@ Doodle2Character/
 ├── 📄 static/                 # Legacy HTML version
 │   └── index.html
 ├── 🐍 main.py                 # FastAPI backend
+├── 🐍 schemas.py              # Pydantic schemas
 ├── 📦 package.json            # Node.js dependencies
+├── 📋 requirements.txt        # Python dependencies
+├── 📋 requirements-dev.txt    # Python dev dependencies
 ├── 🔧 tsconfig.json           # TypeScript config
 └── 📚 README_TYPESCRIPT.md    # Detailed TypeScript docs
 ```
@@ -85,12 +110,33 @@ Doodle2Character/
 
 ## Development
 
-### Prerequisites
-- Python 3.8+ (for backend)
-- Node.js 18+ (for TypeScript frontend)
-- Gemini API key
+### Python Backend Dependencies
+
+The project uses the following main Python packages:
+- **FastAPI** - Modern web framework
+- **Uvicorn** - ASGI server
+- **Pydantic** - Data validation
+- **Jinja2** - Template engine
+- **HTTPx** - HTTP client
+
+Install with:
+```bash
+pip install -r requirements.txt          # Production
+pip install -r requirements-dev.txt     # Development (includes testing tools)
+```
 
 ### Environment Setup
+
+#### Python Virtual Environment
+```bash
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+# venv\Scripts\activate   # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+```
 
 #### Gemini API Key
 The API key is currently hardcoded in the code for demo purposes:
@@ -107,6 +153,10 @@ export NEXT_PUBLIC_GEMINI_API_KEY=your_api_key_here
 
 #### Backend (Required for both versions)
 ```bash
+# Make sure virtual environment is activated
+source venv/bin/activate
+
+# Start FastAPI server
 uvicorn main:app --reload --port 8003
 ```
 
@@ -153,18 +203,20 @@ The TypeScript version provides:
 This project follows the coding philosophy of making changes from the backend if needed and then coordinating coherently over the system from backend to frontend.
 
 ### Development Workflow
-1. Make backend changes in `main.py` if needed
-2. Update frontend (TypeScript preferred)
-3. Ensure type safety with `npm run type-check`
-4. Test both frontend and backend integration
+1. Set up Python virtual environment and install requirements
+2. Make backend changes in `main.py` if needed
+3. Update frontend (TypeScript preferred)
+4. Ensure type safety with `npm run type-check`
+5. Test both frontend and backend integration
 
 ## Troubleshooting
 
 ### Common Issues
-1. **Port conflicts**: Ensure ports 3000 and 8003 are available
-2. **Dependencies**: Run `npm install` for TypeScript version
-3. **API key**: Verify Gemini API key is valid
-4. **Type errors**: Run `npm run type-check` to diagnose
+1. **Python dependencies**: Make sure virtual environment is activated and requirements are installed
+2. **Port conflicts**: Ensure ports 3000 and 8003 are available
+3. **Node.js dependencies**: Run `npm install` for TypeScript version
+4. **API key**: Verify Gemini API key is valid
+5. **Type errors**: Run `npm run type-check` to diagnose
 
 ### Support
 - Check [log.txt](log.txt) for recent changes
@@ -175,15 +227,27 @@ This project follows the coding philosophy of making changes from the backend if
 
 ## ⚡ Quick Commands
 
+### Backend Setup
 ```bash
-# Start everything (recommended)
-npm run dev          # TypeScript frontend (port 3000)
-uvicorn main:app --reload --port 8003  # Backend (port 8003)
+# One-time setup
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
+
+# Daily development
+source venv/bin/activate
+uvicorn main:app --reload --port 8003
+```
+
+### Frontend Development
+```bash
+# TypeScript version (recommended)
+npm install
+npm run dev  # http://localhost:3000
 
 # Type checking
 npm run type-check
 
 # Legacy HTML only
-uvicorn main:app --reload --port 8003
-# → Visit http://localhost:8003/agent-preview/static-html
+# Just visit http://localhost:8003/agent-preview/static-html (backend must be running)
 ```
