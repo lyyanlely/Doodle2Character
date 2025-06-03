@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* Canvas specific styles */
+.canvas-container {
+  touch-action: none; /* Prevent scrolling on touch devices when drawing */
+}
+
+#doodle-canvas {
+  cursor: crosshair;
+  background-color: #374151; /* bg-gray-700 */
+  border-radius: 0.5rem; /* rounded-lg */
+}
+
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.1s ease-in-out;
+  border: 2px solid transparent;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+}
+
+.color-swatch.active {
+  border-color: #60a5fa; /* border-blue-400 */
+  box-shadow: 0 0 0 2px #60a5fa;
+}
+
+/* Button styles */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease-in-out;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background-color: #4f46e5; /* bg-indigo-600 */
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #4338ca; /* bg-indigo-700 */
+}
+
+.btn-secondary {
+  background-color: #4b5563; /* bg-gray-600 */
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #374151; /* bg-gray-700 */
+}
+
+.btn:disabled {
+  background-color: #374151; /* bg-gray-700 */
+  color: #9ca3af; /* text-gray-400 */
+  cursor: not-allowed;
+}
+
+/* Modal styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #1f2937; /* bg-gray-800 */
+  padding: 2rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+} 

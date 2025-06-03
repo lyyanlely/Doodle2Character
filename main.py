@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
+import httpx
 
 app = FastAPI()
 
@@ -19,17 +20,22 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 
 @app.get("/")
 async def read_root():
-    return {"message": "Welcome to the FastAPI app!"}
+    return {"message": "Welcome to the Doodle2Character FastAPI app! Go to /agent-preview/typescript to see the TypeScript frontend."}
 
-# Option 1: Serve the HTML file directly as a static file
+# Route to serve the new TypeScript frontend (proxy to Next.js dev server)
+@app.get("/agent-preview/typescript")
+async def serve_typescript_frontend():
+    # Redirect to the Next.js development server
+    return RedirectResponse(url="http://localhost:3000", status_code=302)
+
+# Option 1: Serve the HTML file directly as a static file (legacy)
 @app.get("/agent-preview/static-html", response_class=HTMLResponse)
 async def serve_static_html():
     with open(os.path.join(BASE_DIR, "static", "index.html"), "r") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)
 
-# Option 2: Serve using StaticFiles (more flexible for multiple static assets)
-# This is generally preferred if your HTML has associated CSS/JS files
+# Option 2: Serve using StaticFiles (more flexible for multiple static assets) (legacy)
 @app.get("/agent-preview/{agent_id}/ui", response_class=HTMLResponse)
 async def serve_agent_ui(agent_id: str):
     # In a real scenario, you'd look up agent_id to find its specific UI file or configuration
