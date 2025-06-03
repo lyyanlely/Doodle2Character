@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doodle to Character</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            color: #f3f4f6; /* text-gray-100 */
+        }
+        .canvas-container {
+            touch-action: none; /* Prevent scrolling on touch devices when drawing */
+        }
+        #doodle-canvas {
+            cursor: crosshair;
+            background-color: #374151; /* bg-gray-700 */
+            border-radius: 0.5rem; /* rounded-lg */
+        }
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s ease-in-out;
+            border: 2px solid transparent;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        .color-swatch.active {
+            border-color: #60a5fa; /* border-blue-400 */
+            box-shadow: 0 0 0 2px #60a5fa;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* bg-indigo-600 */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* bg-indigo-700 */
+        }
+        .btn-secondary {
+            background-color: #4b5563; /* bg-gray-600 */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #374151; /* bg-gray-700 */
+        }
+        .btn:disabled {
+            background-color: #374151; /* bg-gray-700 */
+            color: #9ca3af; /* text-gray-400 */
+            cursor: not-allowed;
+        }
+        select {
+            background-color: #374151; /* bg-gray-700 */
+            border-color: #4b5563; /* border-gray-600 */
+            color: white;
+        }
+        /* Custom modal for alerts */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #1f2937; /* bg-gray-800 */
+            padding: 2rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .modal-close-btn {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-xl shadow-2xl space-y-6">
+        <header class="text-center">
+            <h1 class="text-3xl font-bold text-indigo-400">Doodle to Character AI</h1>
+            <p class="text-gray-400">Draw something, pick a style, and let AI bring it to life!</p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <section id="controls" class="md:col-span-1 space-y-6 bg-gray-900 p-4 rounded-lg">
+                <div>
+                    <label for="color-palette" class="block text-sm font-medium text-gray-300 mb-2">Brush Color:</label>
+                    <div id="color-palette" class="flex flex-wrap gap-2">
+                        </div>
+                </div>
+
+                <div>
+                    <label for="style-selector" class="block text-sm font-medium text-gray-300 mb-1">Character Style:</label>
+                    <select id="style-selector" class="w-full p-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="Classic 2D Cartoon">Classic 2D Cartoon</option>
+                        <option value="Anime Chibi">Anime Chibi</option>
+                        <option value="Pixel Art Sprite">Pixel Art Sprite</option>
+                        <option value="Modern 3D Animation Style">Modern 3D Animation</option>
+                        <option value="Whimsical Storybook Illustration">Whimsical Storybook</option>
+                        <option value="Cute Mascot">Cute Mascot</option>
+                        <option value="Graffiti Art">Graffiti Art</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="brush-size" class="block text-sm font-medium text-gray-300 mb-1">Brush Size:</label>
+                    <input type="range" id="brush-size" min="1" max="50" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    <span id="brush-size-value" class="text-xs text-gray-400">5px</span>
+                </div>
+
+
+                <div class="space-y-3">
+                    <button id="generate-btn" class="btn btn-primary w-full">✨ Generate Character</button>
+                    <button id="clear-btn" class="btn btn-secondary w-full">Clear Doodle</button>
+                    <button id="download-btn" class="btn btn-secondary w-full" disabled>Download Character</button>
+                </div>
+            </section>
+
+            <section class="md:col-span-2 space-y-6">
+                <div class="canvas-container bg-gray-700 rounded-lg shadow-md aspect-[4/3] relative">
+                    <canvas id="doodle-canvas"></canvas>
+                </div>
+                
+                <div id="status-container" class="h-10">
+                     <div id="status-message" class="text-center text-sm text-yellow-400 p-2 rounded-md bg-gray-700 hidden"></div>
+                </div>
+
+
+                <div id="result-section" class="bg-gray-700 p-4 rounded-lg shadow-md min-h-[200px] flex justify-center items-center">
+                    <img id="generated-image" alt="Generated Character" class="max-w-full max-h-96 rounded-md hidden">
+                    <p id="result-placeholder" class="text-gray-500">Your generated character will appear here.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="custom-alert-modal" class="modal hidden">
+        <div class="modal-content">
+            <p id="custom-alert-message"></p>
+            <button id="custom-alert-close-btn" class="btn btn-primary modal-close-btn">OK</button>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Canvas Setup & Drawing Logic ---
+        const canvas = document.getElementById('doodle-canvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let currentColor = '#FFFFFF'; // Default: White
+        let currentBrushSize = 5;
+
+        // Resize canvas to fit container while maintaining aspect ratio (e.g., 4:3)
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            // For a 4:3 aspect ratio
+            let canvasWidth = containerWidth;
+            let canvasHeight = (containerWidth * 3) / 4;
+
+            if (canvasHeight > containerHeight) {
+                canvasHeight = containerHeight;
+                canvasWidth = (containerHeight * 4) / 3;
+            }
+            
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // Redraw existing content if any (simple clear for now)
+            ctx.fillStyle = '#374151'; // bg-gray-700
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Important: Reset drawing properties after resize
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = currentBrushSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            // For touch events, use changedTouches
+            if (evt.changedTouches && evt.changedTouches.length > 0) {
+                return {
+                    x: evt.changedTouches[0].clientX - rect.left,
+                    y: evt.changedTouches[0].clientY - rect.top
+                };
+            }
+            return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            e.preventDefault(); // Prevent page scroll on touch
+            drawing = true;
+            const { x, y } = getMousePos(e);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function draw(e) {
+            e.preventDefault();
+            if (!drawing) return;
+            const { x, y } = getMousePos(e);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            if (drawing) {
+                ctx.closePath();
+                drawing = false;
+            }
+        }
+        
+        // --- UI Elements ---
+        const colorPalette = document.getElementById('color-palette');
+        const styleSelector = document.getElementById('style-selector');
+        const generateBtn = document.getElementById('generate-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const generatedImage = document.getElementById('generated-image');
+        const resultPlaceholder = document.getElementById('result-placeholder');
+        const statusMessage = document.getElementById('status-message');
+        const brushSizeSlider = document.getElementById('brush-size');
+        const brushSizeValue = document.getElementById('brush-size-value');
+
+        // Custom Alert Modal Elements
+        const customAlertModal = document.getElementById('custom-alert-modal');
+        const customAlertMessage = document.getElementById('custom-alert-message');
+        const customAlertCloseBtn = document.getElementById('custom-alert-close-btn');
+
+        // --- App Logic ---
+        const colors = ['#FFFFFF', '#EF4444', '#F97316', '#EAB308', '#22C55E', '#0EA5E9', '#6366F1', '#EC4899', '#8B5CF6', '#000000'];
+        let generatedImageUrl = null;
+        const API_KEY = "AIzaSyBkgodDSBSnawhl3qKmU5pacuZeksccraw"; // Provided by environment
+
+        function initialize() {
+            // Initialize canvas properties
+            resizeCanvas(); // Initial resize
+            window.addEventListener('resize', resizeCanvas); // Resize on window change
+
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = currentBrushSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Populate color palette
+            colors.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color;
+                if (color === currentColor) {
+                    swatch.classList.add('active');
+                }
+                swatch.addEventListener('click', () => {
+                    currentColor = color;
+                    ctx.strokeStyle = currentColor;
+                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                    swatch.classList.add('active');
+                });
+                colorPalette.appendChild(swatch);
+            });
+
+            // Event Listeners for drawing
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            // Touch events
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+            canvas.addEventListener('touchcancel', stopDrawing);
+
+
+            // Brush size
+            brushSizeSlider.addEventListener('input', (e) => {
+                currentBrushSize = e.target.value;
+                ctx.lineWidth = currentBrushSize;
+                brushSizeValue.textContent = `${currentBrushSize}px`;
+            });
+
+            // Button listeners
+            clearBtn.addEventListener('click', clearCanvas);
+            generateBtn.addEventListener('click', handleGenerateCharacter);
+            downloadBtn.addEventListener('click', handleDownload);
+
+            // Modal close listener
+            customAlertCloseBtn.addEventListener('click', () => {
+                customAlertModal.classList.add('hidden');
+            });
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = '#374151'; // bg-gray-700, same as canvas background
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            generatedImage.src = '';
+            generatedImage.classList.add('hidden');
+            resultPlaceholder.classList.remove('hidden');
+            downloadBtn.disabled = true;
+            generatedImageUrl = null;
+            statusMessage.classList.add('hidden');
+            statusMessage.textContent = '';
+        }
+        
+        function showCustomAlert(message) {
+            customAlertMessage.textContent = message;
+            customAlertModal.classList.remove('hidden');
+        }
+
+        // --- API Interaction with Retry ---
+        async function fetchWithRetry(apiUrl, payload, requestMethod = 'POST', maxRetries = 5, initialDelay = 2000) {
+            let attempt = 0;
+            let currentDelay = initialDelay;
+            statusMessage.classList.remove('hidden');
+            statusMessage.textContent = 'Initializing AI process...';
+            statusMessage.classList.remove('text-red-500', 'text-green-500');
+            statusMessage.classList.add('text-yellow-400');
+
+
+            while (attempt < maxRetries) {
+                attempt++;
+                if (attempt > 1) {
+                    statusMessage.textContent = `Retrying API call (attempt ${attempt}/${maxRetries}, delay ${currentDelay/1000}s)...`;
+                }
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: requestMethod,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ message: "Unknown error structure" }));
+                        console.error("API Error Data:", errorData);
+                        const errorMessage = errorData.error?.message || response.statusText || `HTTP error ${response.status}`;
+
+                        if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) { // Retry on rate limit or server error
+                            console.warn(`Attempt ${attempt} failed with status ${response.status}. Retrying in ${currentDelay}ms...`);
+                            await new Promise(resolve => setTimeout(resolve, currentDelay));
+                            currentDelay *= 2; // Exponential backoff
+                            continue; 
+                        }
+                        throw new Error(`API request failed with status: ${response.status}. Message: ${errorMessage}`);
+                    }
+                    statusMessage.textContent = 'API call successful!';
+                    statusMessage.classList.remove('text-yellow-400', 'text-red-500');
+                    statusMessage.classList.add('text-green-500');
+                    // setTimeout(() => statusMessage.classList.add('hidden'), 3000); // Hide after a few seconds
+                    return await response.json();
+                } catch (error) {
+                    console.error(`Fetch attempt ${attempt} failed:`, error);
+                    if (attempt >= maxRetries) {
+                        statusMessage.textContent = `Error: API call failed after ${maxRetries} attempts. ${error.message}`;
+                        statusMessage.classList.remove('text-yellow-400', 'text-green-500');
+                        statusMessage.classList.add('text-red-500');
+                        showCustomAlert(`Failed to communicate with AI services after several retries: ${error.message}. Please try again later.`);
+                        throw error;
+                    }
+                     if (!(error.message.includes("429") || error.message.includes("500"))) { // If not a retryable error type based on status code
+                        statusMessage.textContent = `Error: ${error.message}`;
+                        statusMessage.classList.remove('text-yellow-400', 'text-green-500');
+                        statusMessage.classList.add('text-red-500');
+                        showCustomAlert(`An unexpected error occurred: ${error.message}.`);
+                        throw error; // Don't retry for non-server/rate-limit errors unless already caught by status code check
+                    }
+                    // For other errors caught in try (e.g. network issues), or if it was a retryable status but failed to parse json
+                    await new Promise(resolve => setTimeout(resolve, currentDelay));
+                    currentDelay *= 2;
+                }
+            }
+            // This part should ideally not be reached if throw error; is hit above.
+            statusMessage.textContent = `Error: API call failed definitively after ${maxRetries} attempts.`;
+            statusMessage.classList.remove('text-yellow-400', 'text-green-500');
+            statusMessage.classList.add('text-red-500');
+            showCustomAlert(`Failed to complete the AI process after ${maxRetries} attempts. Please try again later.`);
+            throw new Error(`API request failed after ${maxRetries} attempts.`);
+        }
+
+
+        async function handleGenerateCharacter() {
+            generateBtn.disabled = true;
+            downloadBtn.disabled = true;
+            generatedImage.classList.add('hidden');
+            resultPlaceholder.classList.remove('hidden');
+            resultPlaceholder.textContent = 'AI is thinking...';
+            statusMessage.textContent = 'Preparing your doodle for AI...';
+            statusMessage.classList.remove('hidden', 'text-red-500', 'text-green-500');
+            statusMessage.classList.add('text-yellow-400');
+
+            // 1. Get doodle as base64 image
+            const doodleDataUrl = canvas.toDataURL('image/png');
+            const base64ImageData = doodleDataUrl.split(',')[1];
+
+            if (!base64ImageData || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
+                 // A more robust check for empty canvas: compare with a fresh empty canvas
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                 const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.fillStyle = '#374151'; // Match background
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+                if (canvas.toDataURL() === tempCanvas.toDataURL()) {
+                    showCustomAlert('The doodle area is empty. Please draw something first!');
+                    resultPlaceholder.textContent = 'Your generated character will appear here.';
+                    statusMessage.classList.add('hidden');
+                    generateBtn.disabled = false;
+                    return;
+                }
+            }
+
+
+            try {
+                // 2. Get description from Gemini
+                statusMessage.textContent = 'AI is analyzing your doodle...';
+                const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+                const geminiPayload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: "Describe this doodle. Focus on the main subject, key shapes, and any distinct features. The description will be used to generate a cartoon character. For example, 'A simple drawing of a round character with spiky hair and big eyes'. Be concise, aim for 1-2 sentences." },
+                            { inlineData: { mimeType: "image/png", data: base64ImageData } }
+                        ]
+                    }],
+                };
+                
+                const geminiResult = await fetchWithRetry(geminiApiUrl, geminiPayload);
+                let doodleDescription = "A doodle of a character"; // Fallback
+                if (geminiResult.candidates && geminiResult.candidates[0].content && geminiResult.candidates[0].content.parts && geminiResult.candidates[0].content.parts[0].text) {
+                    doodleDescription = geminiResult.candidates[0].content.parts[0].text.trim();
+                } else {
+                    console.warn("Could not get a good description from Gemini, using fallback.");
+                }
+                statusMessage.textContent = `Doodle described as: "${doodleDescription.substring(0,50)}..."`;
+
+                // 3. Generate image with Imagen
+                statusMessage.textContent = 'AI is rendering your doodle...';
+                const selectedStyle = styleSelector.value;
+                // Enhancing prompt for better character generation
+                const imagenPrompt = `Generate a single, well-defined ${selectedStyle} style cartoon character. The character is based on this description: "${doodleDescription}". The character should be the main focus, clear, vibrant, and artistically rendered in the chosen style. No text, no multiple characters, just one central character.`;
+
+                const imagenApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${API_KEY}`;
+                const imagenPayload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: imagenPrompt }
+                        ]
+                    }],
+                };
+
+                const imagenResult = await fetchWithRetry(imagenApiUrl, imagenPayload);
+                statusMessage.textContent = 'AI is creating your character...';
+
+                if (imagenResult.candidates && imagenResult.candidates[0].content && imagenResult.candidates[0].content.parts) {
+                    for (const part of imagenResult.candidates[0].content.parts) {
+                        if (part.image) {
+                            generatedImageUrl = `data:image/png;base64,${part.image.data.bytesBase64Encoded}`;
+                            generatedImage.src = generatedImageUrl;
+                            generatedImage.classList.remove('hidden');
+                            resultPlaceholder.classList.add('hidden');
+                            downloadBtn.disabled = false;
+                            statusMessage.textContent = 'Character generated successfully!';
+                            statusMessage.classList.remove('text-yellow-400', 'text-red-500');
+                            statusMessage.classList.add('text-green-500');
+                            break;
+                        }
+                    }
+                } else {
+                    throw new Error("Image generation failed: No image data in response.");
+                }
+
+            } catch (error) {
+                console.error('Error in generation pipeline:', error);
+                resultPlaceholder.textContent = 'Failed to generate character. Please try again.';
+                statusMessage.textContent = `Error: ${error.message}`;
+                statusMessage.classList.remove('text-yellow-400', 'text-green-500');
+                statusMessage.classList.add('text-red-500');
+                if (!customAlertModal.classList.contains('hidden')) { // If alert is already shown by fetchWithRetry
+                   // do nothing
+                } else {
+                   showCustomAlert(`An error occurred: ${error.message}`);
+                }
+            } finally {
+                generateBtn.disabled = false;
+                 // Keep status message visible for a bit longer on success/final error
+                setTimeout(() => {
+                    if (!statusMessage.textContent.toLowerCase().includes('error') && !statusMessage.textContent.toLowerCase().includes('retry')) {
+                       // statusMessage.classList.add('hidden'); // Only hide if not an error or ongoing retry
+                    }
+                }, 5000);
+            }
+        }
+
+        function handleDownload() {
+            if (generatedImageUrl) {
+                const link = document.createElement('a');
+                link.href = generatedImageUrl;
+                link.download = 'my-ai-character.png';
+                document.body.appendChild(link); // Required for Firefox
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                showCustomAlert('No character has been generated yet to download.');
+            }
+        }
+        
+        // --- Initialize App ---
+        window.onload = initialize;
+
+    </script>
+</body>
+</html>
